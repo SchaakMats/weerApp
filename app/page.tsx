@@ -3,6 +3,7 @@ import BuienradarBlock from "@/components/Buienradar";
 import ModelComparator from "@/components/ModelComparator";
 import ForecastChart from "@/components/ForecastChart";
 import Historical from "@/components/Historical";
+import Advanced from "@/components/Advanced";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <ModelComparator />
       <ForecastChart />
       <Historical />
+      <Advanced />
     </main>
   );
 }
