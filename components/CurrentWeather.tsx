@@ -6,7 +6,7 @@ export default function CurrentWeatherBlock() {
   const [data, setData] = useState<CurrentWeather | null>(null);
 
   useEffect(() => {
-    fetch("/api/openmeteo").then(r => r.json()).then(d => setData(d.current));
+    fetch("/api/openmeteo").then(r => r.json()).then(d => { if (d.current) setData(d.current); });
   }, []);
 
   if (!data) return <div className="p-6 text-gray-400">Laden...</div>;

@@ -29,6 +29,7 @@ export async function GET() {
       const res = await fetch(url.toString(), { signal: controller.signal });
       clearTimeout(timeout);
 
+      if (!res.ok) return { year, date, tempMax: null, tempMin: null, precipitation: null };
       const json = await res.json();
       return {
         year,

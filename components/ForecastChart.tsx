@@ -10,7 +10,7 @@ export default function ForecastChart() {
     fetch("/api/openmeteo").then(r => r.json()).then(setData);
   }, []);
 
-  if (!data) return <div className="p-6 text-gray-400">Laden...</div>;
+  if (!data || !data.daily) return <div className="p-6 text-gray-400">{(data as any)?.error ?? "Laden..."}</div>;
 
   const chartData = data.daily.map(d => ({
     date: d.date.slice(5),
