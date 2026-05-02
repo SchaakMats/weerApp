@@ -1,35 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-  const ts = req.nextUrl.searchParams.get("ts") ?? "";
-
-  const url = ts
-    ? `https://api.buienradar.nl/image/1.0/radarmap/mercator/700x700/${ts}`
-    : `https://api.buienradar.nl/image/1.0/radarmap/mercator/700x700`;
-
+export async function GET() {
   try {
-    const res = await fetch(url, {
-      headers: {
-        Referer: "https://www.buienradar.nl/",
-        Origin: "https://www.buienradar.nl",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
-      },
+    // Stap 1: haal de actuele radar-URL op uit de Buienradar datafeed
+    const feed = await fetch("https://data.buienradar.nl/2.0/feed/json", {
+      headers: { Accept: "application/json" },
     });
+    const json = await feed.json();
+    const radarUrl: string = json.actual?.actualradarurl;
 
-    if (!res.ok) {
-      return new NextResponse(null, { status: res.status });
+    if (!radarUrl) {
+      return new NextResponse("geen radar-url in feed", { status: 502 });
     }
 
-    const buffer = await res.arrayBuffer();
+    // Stap 2: proxy de GIF (volgt de redirect automatisch)
+    const img = await fetch(radarUrl, {
+      headers: {
+        Referer: "https://www.buienradar.nl/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
+        Accept: "image/gif,image/*,*/*",
+      },
+      redirect: "follow",
+    });
+
+    if (!img.ok) {
+      return new NextResponse(`upstream ${img.status}`, { status: img.status });
+    }
+
+    const buffer = await img.arrayBuffer();
     return new NextResponse(buffer, {
       headers: {
-        "Content-Type": res.headers.get("Content-Type") ?? "image/png",
+        "Content-Type": img.headers.get("Content-Type") ?? "image/gif",
         "Cache-Control": "public, max-age=300",
       },
     });
-  } catch {
-    return new NextResponse(null, { status: 503 });
+  } catch (e: any) {
+    return new NextResponse(e.message, { status: 503 });
   }
 }
