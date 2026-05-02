@@ -57,7 +57,7 @@ export default function BuienradarBlock() {
         {timestamps.map((t, i) => (
           <img
             key={t}
-            src={`https://api.buienradar.nl/image/1.0/radarmap/mercator/700x700/${t}`}
+            src={`/api/radar?ts=${t}`}
             alt="Neerslagradar"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-100 ${i === frame ? "opacity-100" : "opacity-0"}`}
           />
