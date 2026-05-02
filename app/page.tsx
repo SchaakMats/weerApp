@@ -1,6 +1,7 @@
 import CurrentWeatherBlock from "@/components/CurrentWeather";
 import BuienradarBlock from "@/components/Buienradar";
 import ModelComparator from "@/components/ModelComparator";
+import ForecastChart from "@/components/ForecastChart";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
       <CurrentWeatherBlock />
       <BuienradarBlock />
       <ModelComparator />
+      <ForecastChart />
     </main>
   );
 }
