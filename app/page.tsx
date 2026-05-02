@@ -1,5 +1,6 @@
 import CurrentWeatherBlock from "@/components/CurrentWeather";
 import BuienradarBlock from "@/components/Buienradar";
+import ModelComparator from "@/components/ModelComparator";
 
 export default function Home() {
   return (
@@ -7,6 +8,7 @@ export default function Home() {
       <h1 className="text-3xl font-bold">Weerdashboard Hattem</h1>
       <CurrentWeatherBlock />
       <BuienradarBlock />
+      <ModelComparator />
     </main>
   );
 }
