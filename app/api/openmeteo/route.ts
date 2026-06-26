@@ -15,10 +15,11 @@ export async function GET() {
   ].join(","));
   url.searchParams.set("daily", [
     "temperature_2m_min","temperature_2m_max","precipitation_sum",
-    "wind_speed_10m_max","weather_code"
+    "wind_speed_10m_max","weather_code","precipitation_probability_max"
   ].join(","));
   url.searchParams.set("hourly", [
-    "temperature_2m","precipitation","wind_speed_10m"
+    "temperature_2m","precipitation","wind_speed_10m",
+    "precipitation_probability","weather_code"
   ].join(","));
   url.searchParams.set("timezone", "Europe/Amsterdam");
   url.searchParams.set("forecast_days", "7");
@@ -55,12 +56,15 @@ export async function GET() {
         precipitation: json.daily.precipitation_sum?.[i] ?? null,
         windspeedMax: json.daily.wind_speed_10m_max?.[i] ?? null,
         weathercode: json.daily.weather_code?.[i] ?? 0,
+        precipitationProbability: json.daily.precipitation_probability_max?.[i] ?? 0,
       })),
       hourly: (json.hourly?.time ?? []).map((time: string, i: number) => ({
         time,
         temperature: json.hourly.temperature_2m?.[i] ?? null,
         precipitation: json.hourly.precipitation?.[i] ?? null,
         windspeed: json.hourly.wind_speed_10m?.[i] ?? null,
+        precipitationProbability: json.hourly.precipitation_probability?.[i] ?? 0,
+        weathercode: json.hourly.weather_code?.[i] ?? 0,
       })),
     };
 

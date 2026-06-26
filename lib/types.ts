@@ -18,6 +18,7 @@ export type DailyForecast = {
   precipitation: number;
   windspeedMax: number;
   weathercode: number;
+  precipitationProbability: number;
 };
 
 export type HourlyForecast = {
@@ -25,6 +26,8 @@ export type HourlyForecast = {
   temperature: number;
   precipitation: number;
   windspeed: number;
+  precipitationProbability: number;
+  weathercode: number;
 };
 
 export type OpenMeteoResponse = {
