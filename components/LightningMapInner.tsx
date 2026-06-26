@@ -115,6 +115,7 @@ export default function LightningMapInner() {
 
       ws.onerror = () => {
         setStatus("disconnected");
+        ws.onclose = null; // prevent onclose from also scheduling a reconnect
         ws.close();
         reconnectTimerRef.current = setTimeout(connect, 5000);
       };
@@ -123,6 +124,7 @@ export default function LightningMapInner() {
     connect();
 
     return () => {
+      style.remove();
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
       if (wsRef.current) {
