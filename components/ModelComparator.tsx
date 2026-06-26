@@ -20,25 +20,25 @@ export default function ModelComparator() {
   ];
 
   return (
-    <section className="p-6 bg-white rounded-2xl shadow">
-      <h2 className="text-xl font-bold mb-4">Modellencomparator — vandaag</h2>
+    <section className="glass-card p-5">
+      <h2 className="text-white/50 text-xs font-medium tracking-widest uppercase mb-4">Modellencomparator — vandaag</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-500 border-b">
-              <th className="pb-2">Bron</th>
-              <th className="pb-2">Min</th>
-              <th className="pb-2">Max</th>
-              <th className="pb-2">Neerslag</th>
+            <tr className="text-left text-white/40 border-b border-white/10">
+              <th className="pb-2 font-medium">Bron</th>
+              <th className="pb-2 font-medium">Min</th>
+              <th className="pb-2 font-medium">Max</th>
+              <th className="pb-2 font-medium">Neerslag</th>
             </tr>
           </thead>
           <tbody>
             {sources.map(s => (
-              <tr key={s.name} className="border-b last:border-0">
-                <td className="py-2 font-medium">{s.name}</td>
-                <td className="py-2">{s.tempMin != null ? `${s.tempMin}°C` : "—"}</td>
-                <td className="py-2">{s.tempMax != null ? `${s.tempMax}°C` : "—"}</td>
-                <td className="py-2">{("error" in s && s.error) ? <span className="text-red-400 text-xs">niet beschikbaar</span> : (s.precipitation ?? "—")}</td>
+              <tr key={s.name} className="border-b border-white/10 last:border-0">
+                <td className="py-2 text-white font-medium">{s.name}</td>
+                <td className="py-2 text-white/80">{s.tempMin != null ? `${s.tempMin}°C` : "—"}</td>
+                <td className="py-2 text-white/80">{s.tempMax != null ? `${s.tempMax}°C` : "—"}</td>
+                <td className="py-2 text-white/80">{("error" in s && s.error) ? <span className="text-red-300 text-xs">niet beschikbaar</span> : (s.precipitation ?? "—")}</td>
               </tr>
             ))}
           </tbody>
