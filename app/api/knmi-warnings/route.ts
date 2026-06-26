@@ -7,41 +7,57 @@ export const revalidate = 900;
 
 type Warning = { level: "geel" | "oranje" | "rood"; description: string; valid: string };
 
+// Meteoalarm Atom feed — officieel Europees waarschuwingssysteem, publiek
+const FEED_URL = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-netherlands";
+
 export async function GET() {
   try {
-    const res = await axios.get("https://www.knmi.nl/nederland-nu/weer/waarschuwingen", {
-      headers: { ...SCRAPE_HEADERS, Referer: "https://www.knmi.nl/", Origin: "https://www.knmi.nl" },
+    const res = await axios.get(FEED_URL, {
+      headers: { ...SCRAPE_HEADERS, Accept: "application/atom+xml,application/xml,text/xml,*/*" },
       timeout: 8000,
       validateStatus: () => true,
     });
 
-    const $ = cheerio.load(res.data);
+    const $ = cheerio.load(res.data, { xmlMode: true });
     const warnings: Warning[] = [];
 
-    $("[data-province], .warning-item, .waarschuwing").each((_, el) => {
-      const text = $(el).text().toLowerCase();
-      if (!text.includes("gelderland")) return;
-      const level = text.includes("rood") ? "rood" : text.includes("oranje") ? "oranje" : "geel";
-      const description = $(el).find("p, .description, .omschrijving").first().text().trim()
-        || $(el).text().trim().slice(0, 200);
-      const valid = $(el).find("time, .valid, .geldig").first().text().trim() || "";
-      if (description) warnings.push({ level, description, valid });
+    $("entry").each((_, el) => {
+      const title = $(el).find("title").text().trim();
+      const summary = $(el).find("summary").text().trim();
+      const updated = $(el).find("updated").text().trim();
+
+      // Filter op Gelderland
+      const combined = (title + " " + summary).toLowerCase();
+      if (!combined.includes("gelderland")) return;
+
+      // Bepaal level op basis van kleur in tekst of category
+      const category = $(el).find("category").attr("term")?.toLowerCase() ?? "";
+      let level: "geel" | "oranje" | "rood" = "geel";
+      if (combined.includes("rood") || category.includes("extreme")) level = "rood";
+      else if (combined.includes("oranje") || category.includes("severe")) level = "oranje";
+
+      // Beschrijving: verwijder de provincienaam en haal de waarschuwingstekst op
+      const description = summary
+        .replace(/Gelderland/gi, "")
+        .replace(/^\s*[,;:\-–]\s*/, "")
+        .trim() || title;
+
+      // Geldigheidsduur
+      const valid = updated ? new Date(updated).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" }) : "";
+
+      if (description.length > 2) warnings.push({ level, description, valid });
     });
 
-    // Fallback: zoek op kleur-badges als structuur anders is
-    if (warnings.length === 0) {
-      $("*:contains('Gelderland')").each((_, el) => {
-        const parent = $(el).closest("article, section, li, div.warning, div.waarschuwing");
-        if (!parent.length) return;
-        const parentText = parent.text().toLowerCase();
-        if (!parentText.includes("gelderland")) return;
-        const level = parentText.includes("rood") ? "rood" : parentText.includes("oranje") ? "oranje" : "geel";
-        const description = parent.text().trim().slice(0, 300);
-        warnings.push({ level, description, valid: "" });
-      });
-    }
+    // Dedupliceer op basis van level + eerste 60 chars
+    const seen = new Set<string>();
+    const unique = warnings.filter(w => {
+      const key = w.level + w.description.slice(0, 60);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
-    return NextResponse.json({ warnings: warnings.slice(0, 5) });
+    return NextResponse.json({ warnings: unique.slice(0, 5) });
   } catch (e: any) {
     return NextResponse.json({ warnings: [], error: e.message }, { status: 200 });
   }
