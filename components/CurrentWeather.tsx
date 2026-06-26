@@ -11,6 +11,8 @@ const STAT_ICONS: Record<string, string> = {
   "UV-index": "☀️",
   "Zichtbaarheid": "👁️",
   "Bewolking": "☁️",
+  "Dauwpunt": "💦",
+  "Windstoten": "🌬️",
 };
 
 export default function CurrentWeatherBlock() {
@@ -34,6 +36,8 @@ export default function CurrentWeatherBlock() {
         <Stat label="UV-index" value={String(data.uvIndex)} />
         <Stat label="Zichtbaarheid" value={`${(data.visibility / 1000).toFixed(1)} km`} />
         <Stat label="Bewolking" value={`${data.cloudcover}%`} />
+        <Stat label="Dauwpunt" value={`${data.dewPoint}°C`} />
+        <Stat label="Windstoten" value={`${data.windGusts} km/h`} />
       </div>
     </section>
   );

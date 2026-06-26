@@ -33,6 +33,9 @@ export default function DayCards() {
               <p className="text-white font-semibold text-sm">{Math.round(d.tempMax)}°</p>
               <p className="text-white/40 text-xs">{Math.round(d.tempMin)}°</p>
               <p className="text-blue-300 text-xs">{d.precipitationProbability ?? 0}%</p>
+              {d.windGusts != null && (
+                <p className="text-white/40 text-xs">💨{Math.round(d.windGusts)}</p>
+              )}
             </div>
           );
         })}
