@@ -39,3 +39,14 @@ export type OpenMeteoResponse = {
   daily: DailyForecast[];
   hourly: HourlyForecast[];
 };
+
+export type AirQuality = {
+  aqi: number;
+  pm25: number;
+  pm10: number;
+  ozone: number;
+  no2: number;
+  grassPollen: number;
+  birchPollen: number;
+  mugwortPollen: number;
+};
