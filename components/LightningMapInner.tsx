@@ -23,7 +23,9 @@ export default function LightningMapInner() {
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const pingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [status, setStatus] = useState<"connecting" | "live" | "disconnected">("connecting");
+  const [strikeCount, setStrikeCount] = useState(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -78,13 +80,16 @@ export default function LightningMapInner() {
 
       ws.onopen = () => {
         ws.send(JSON.stringify({ time: 0 }));
+        setStatus("live");
+        // Ping every 30s to keep connection alive
+        if (pingRef.current) clearInterval(pingRef.current);
+        pingRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ time: 0 }));
+        }, 30_000);
       };
 
       ws.onmessage = (event: MessageEvent) => {
-        if (!hasReceivedMessage) {
-          hasReceivedMessage = true;
-          setStatus("live");
-        }
+        if (!hasReceivedMessage) hasReceivedMessage = true;
         try {
           const strike = JSON.parse(event.data as string);
           if (
@@ -103,6 +108,7 @@ export default function LightningMapInner() {
           }).addTo(mapInstanceRef.current!);
 
           markersRef.current.push({ marker: circleMarker, opacity: 0.9 });
+          setStrikeCount(c => c + 1);
 
           if (markersRef.current.length > 200) {
             const oldest = markersRef.current.shift();
@@ -114,15 +120,17 @@ export default function LightningMapInner() {
       };
 
       ws.onclose = () => {
+        if (pingRef.current) clearInterval(pingRef.current);
         setStatus("disconnected");
-        reconnectTimerRef.current = setTimeout(connect, 5000);
+        reconnectTimerRef.current = setTimeout(connect, 3000);
       };
 
       ws.onerror = () => {
+        if (pingRef.current) clearInterval(pingRef.current);
         setStatus("disconnected");
-        ws.onclose = null; // prevent onclose from also scheduling a reconnect
+        ws.onclose = null;
         ws.close();
-        reconnectTimerRef.current = setTimeout(connect, 5000);
+        reconnectTimerRef.current = setTimeout(connect, 3000);
       };
     }
 
@@ -134,6 +142,7 @@ export default function LightningMapInner() {
       style.remove();
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+      if (pingRef.current) clearInterval(pingRef.current);
       if (wsRef.current) {
         wsRef.current.onclose = null;
         wsRef.current.onerror = null;
@@ -155,10 +164,10 @@ export default function LightningMapInner() {
       }`}
     >
       {status === "live"
-        ? "● Live"
+        ? strikeCount > 0 ? `● Live · ${strikeCount} inslagen` : "● Live · rustig"
         : status === "connecting"
         ? "○ Verbinden..."
-        : "○ Geen verbinding"}
+        : "○ Herverbinden..."}
     </span>
   );
 
