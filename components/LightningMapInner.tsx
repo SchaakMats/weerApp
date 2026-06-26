@@ -4,10 +4,10 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const WS_SERVERS = [
-  "wss://ws1.blitzortung.org:3000/",
-  "wss://ws5.blitzortung.org:3000/",
-  "wss://ws6.blitzortung.org:3000/",
-  "wss://ws7.blitzortung.org:3000/",
+  "wss://ws1.blitzortung.org/",
+  "wss://ws5.blitzortung.org/",
+  "wss://ws6.blitzortung.org/",
+  "wss://ws7.blitzortung.org/",
 ];
 
 interface TrackedMarker {
@@ -37,7 +37,7 @@ export default function LightningMapInner() {
     // Init Leaflet map
     const map = L.map(mapContainerRef.current, {
       center: [52.4833, 6.0667],
-      zoom: 7,
+      zoom: 8,
     });
     mapInstanceRef.current = map;
 
