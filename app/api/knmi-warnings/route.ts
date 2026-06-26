@@ -30,17 +30,30 @@ export async function GET() {
       const combined = (title + " " + summary).toLowerCase();
       if (!combined.includes("gelderland")) return;
 
-      // Bepaal level op basis van kleur in tekst of category
+      // Bepaal level — feed gebruikt Engelse kleurnamen (Red/Orange/Yellow)
       const category = $(el).find("category").attr("term")?.toLowerCase() ?? "";
       let level: "geel" | "oranje" | "rood" = "geel";
-      if (combined.includes("rood") || category.includes("extreme")) level = "rood";
-      else if (combined.includes("oranje") || category.includes("severe")) level = "oranje";
+      if (combined.includes("red ") || combined.includes("extreme") || category.includes("extreme")) level = "rood";
+      else if (combined.includes("orange") || combined.includes("severe") || category.includes("severe")) level = "oranje";
 
-      // Beschrijving: verwijder de provincienaam en haal de waarschuwingstekst op
-      const description = summary
-        .replace(/Gelderland/gi, "")
-        .replace(/^\s*[,;:\-–]\s*/, "")
-        .trim() || title;
+      // Beschrijving: gebruik titel, vertaal kleurwoorden naar NL, strip locatieruis
+      const typeMap: Record<string, string> = {
+        "high-temperature warning": "Hittewaarschuwing",
+        "thunderstorm warning": "Onweer",
+        "wind warning": "Windwaarschuwing",
+        "rain warning": "Zware neerslag",
+        "snow warning": "Sneeuwwaarschuwing",
+        "fog warning": "Mist",
+        "ice warning": "Gladheid",
+        "coastal event warning": "Kustwaarschuwing",
+      };
+      let description = title
+        .replace(/^(red|orange|yellow)\s+/i, "")
+        .replace(/\s+issued for The Netherlands\s*[-–]?\s*Gelderland/i, "")
+        .trim();
+      for (const [en, nl] of Object.entries(typeMap)) {
+        description = description.replace(new RegExp(en, "i"), nl);
+      }
 
       // Geldigheidsduur
       const valid = updated ? new Date(updated).toLocaleString("nl-NL", { dateStyle: "short", timeStyle: "short" }) : "";
