@@ -22,6 +22,7 @@ export default function LightningMapInner() {
   const wsRef = useRef<WebSocket | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
   const [status, setStatus] = useState<"connecting" | "live" | "disconnected">("connecting");
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function LightningMapInner() {
     mapInstanceRef.current = map;
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
     }).addTo(map);
 
     // Fade interval — every 2 seconds
@@ -61,6 +62,7 @@ export default function LightningMapInner() {
 
     // WebSocket connect function
     function connect() {
+      if (!mountedRef.current) return;
       if (wsRef.current) {
         wsRef.current.onclose = null;
         wsRef.current.onerror = null;
@@ -88,6 +90,8 @@ export default function LightningMapInner() {
             typeof strike.lat !== "number" ||
             typeof strike.lon !== "number"
           ) return;
+
+          if (!mapInstanceRef.current) return;
 
           const circleMarker = L.circleMarker([strike.lat, strike.lon], {
             radius: 4,
@@ -124,6 +128,8 @@ export default function LightningMapInner() {
     connect();
 
     return () => {
+      mountedRef.current = false;
+      markersRef.current = [];
       style.remove();
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
