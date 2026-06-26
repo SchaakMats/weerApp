@@ -1,19 +1,52 @@
-# Extra Features voor Weerhobbyist — Design Spec
+# Extra Features + Tab Navigatie — Design Spec
 *2026-06-26*
 
 ## Doel
 
-Vijf nieuwe features toevoegen voor een weerhobbyist: dauwpunt, windstoten, 14-daagse verwachting, luchtkwaliteit, KNMI-waarschuwingen en een bliksemradar. Alles gratis, geen nieuwe API-keys.
+Tab-navigatie toevoegen zodat de pagina overzichtelijk blijft, plus vijf nieuwe features voor een weerhobbyist: dauwpunt, windstoten, 14-daagse verwachting, luchtkwaliteit, KNMI-waarschuwingen en bliksemradar.
 
-## Overzicht nieuwe features
+---
 
-| Feature | Type | Databron |
-|---|---|---|
-| Dauwpunt + windstoten | Uitbreiding bestaand | Open-Meteo (al beschikbaar) |
-| 14-daagse verwachting | Uitbreiding bestaand | Open-Meteo `forecast_days=14` |
-| Luchtkwaliteit + pollen | Nieuw blok + route | Open-Meteo Air Quality API |
-| KNMI Waarschuwingen | Nieuw blok + route | KNMI website scrapen |
-| Bliksemradar | Nieuw blok | Lightningmaps.org iframe |
+## Tab Navigatie
+
+### Structuur
+
+Twee tabs, gestuurd door client-side state in `app/page.tsx` (`"use client"`).
+
+**Tab 1 — Weer** (standaard actief)
+```
+KnmiWarnings (conditioneel — alleen zichtbaar bij actieve waarschuwing)
+Hero
+HourlyStrip
+DayCards
+ForecastChart
+BuienradarBlock
+LightningMap
+CurrentWeatherBlock
+AirQuality
+```
+
+**Tab 2 — Geavanceerd**
+```
+ModelComparator
+Historical
+Advanced
+```
+
+### Bottom Tab Bar (`components/TabBar.tsx`)
+
+- Vaste balk onderin het scherm: `fixed bottom-0 left-0 right-0`
+- Glass-morphism stijl: `glass-card` zonder border-radius bovenaan, `border-t border-white/20`
+- Twee knoppen met icon + label:
+  - 🌤️ **Weer** — activeert tab 1
+  - 📊 **Geavanceerd** — activeert tab 2
+- Actieve tab: `text-white`, inactieve tab: `text-white/40`
+- Hoogte: `pb-safe` voor iOS home indicator, anders `py-3`
+- `max-w-xl mx-auto` voor uitlijning met de rest van de content
+
+### Page Layout aanpassing
+
+`app/page.tsx` wordt een client component (`"use client"`). State: `const [tab, setTab] = useState<"weer" | "geavanceerd">("weer")`. Content wordt conditioneel gerenderd op basis van tab. Body krijgt `pb-20` padding zodat content niet achter de tab bar verdwijnt.
 
 ---
 
@@ -29,7 +62,6 @@ windGusts: number;
 
 Toevoegen aan `HourlyForecast`:
 ```ts
-dewPoint: number;
 windGusts: number;
 ```
 
@@ -41,27 +73,28 @@ windGusts: number;
 ### API Route (`app/api/openmeteo/route.ts`)
 
 `current` params: voeg `dew_point_2m`, `wind_gusts_10m` toe
-`hourly` params: voeg `dew_point_2m`, `wind_gusts_10m` toe
+`hourly` params: voeg `wind_gusts_10m` toe
 `daily` params: voeg `wind_gusts_10m_max` toe
 
 Mapping:
-- `current.dewPoint = json.current.dew_point_2m`
-- `current.windGusts = json.current.wind_gusts_10m`
-- `hourly[i].dewPoint = json.hourly.dew_point_2m?.[i] ?? null`
-- `hourly[i].windGusts = json.hourly.wind_gusts_10m?.[i] ?? null`
-- `daily[i].windGusts = json.daily.wind_gusts_10m_max?.[i] ?? null`
+```ts
+current.dewPoint = json.current.dew_point_2m
+current.windGusts = json.current.wind_gusts_10m
+hourly[i].windGusts = json.hourly.wind_gusts_10m?.[i] ?? null
+daily[i].windGusts = json.daily.wind_gusts_10m_max?.[i] ?? null
+```
 
 ### UI Aanpassingen
 
-**`components/CurrentWeather.tsx`:** Twee extra stat-kaartjes toevoegen aan de bestaande grid:
-- `Stat label="Dauwpunt" value={`${data.dewPoint}°C`}` met icon 💦
-- `Stat label="Windstoten" value={`${data.windGusts} km/h`}` met icon 🌬️
+**`components/CurrentWeather.tsx`:** Twee extra stat-kaartjes:
+- `💦 Dauwpunt` → `${data.dewPoint}°C`
+- `🌬️ Windstoten` → `${data.windGusts} km/h`
 
-**`components/HourlyStrip.tsx`:** Onder de neerslagkans `%` een windstoot waarde tonen:
-- Kleine tekst: `{h.windGusts} km/h` in `text-white/40 text-xs`
+**`components/HourlyStrip.tsx`:** Onder neerslagkans % een windstoot waarde:
+- `text-white/40 text-xs`: `{Math.round(h.windGusts)} km/h`
 
-**`components/DayCards.tsx`:** Onder de neerslagkans een windstoten waarde:
-- Kleine tekst: `💨 {d.windGusts}` in `text-white/40 text-xs`
+**`components/DayCards.tsx`:** Onder neerslagkans % een windstoot waarde:
+- `text-white/40 text-xs`: `💨 {Math.round(d.windGusts)}`
 
 ---
 
@@ -69,16 +102,7 @@ Mapping:
 
 ### API Route (`app/api/openmeteo/route.ts`)
 
-Verander:
-```ts
-url.searchParams.set("forecast_days", "7");
-```
-naar:
-```ts
-url.searchParams.set("forecast_days", "14");
-```
-
-Geen verdere wijzigingen nodig. `DayCards` en `ForecastChart` tonen automatisch alle 14 dagen. `HourlyStrip` blijft gefilterd op vandaag + morgen (36 uur max).
+Verander `forecast_days` van `"7"` naar `"14"`. Geen verdere wijzigingen. DayCards en ForecastChart tonen automatisch 14 dagen.
 
 ---
 
@@ -88,7 +112,7 @@ Geen verdere wijzigingen nodig. `DayCards` en `ForecastChart` tonen automatisch 
 
 ```ts
 export type AirQuality = {
-  aqi: number;          // European AQI 0-500
+  aqi: number;
   pm25: number;
   pm10: number;
   ozone: number;
@@ -103,7 +127,7 @@ export type AirQuality = {
 
 URL: `https://air-quality-api.open-meteo.com/v1/air-quality`
 Params: `latitude`, `longitude`, `current=european_aqi,pm2_5,pm10,ozone,nitrogen_dioxide,grass_pollen,birch_pollen,mugwort_pollen`, `timezone=Europe/Amsterdam`
-Revalidate: 1800 (30 min)
+Revalidate: 1800
 
 Mapping:
 ```ts
@@ -143,15 +167,11 @@ export function pollenLabel(value: number): string {
 ### Nieuwe Component (`components/AirQuality.tsx`)
 
 - `"use client"`, fetcht `/api/airquality`
-- Glass-card bovenaan: grote AQI-waarde + gekleurde label ("Goed" / "Matig" etc.)
-- Grid 2×2: PM2.5, PM10, Ozon, NO₂ als stat-kaartjes
-- Sub-sectie "Pollen": 🌾 Gras, 🌳 Berk, 🌿 Ambrosia — elk met `pollenLabel()`
-- Loading: return null
-- Error: return null (pollen kan seizoensgebonden ontbreken)
-
-### Paginavolgorde (`app/page.tsx`)
-
-`<AirQuality />` toevoegen na `<Advanced />` (onderaan, informatief blok).
+- Glass-card
+- Bovenaan: grote AQI-waarde + gekleurde label (kleur uit `aqiLabel()`)
+- Grid 2×2: PM2.5, PM10, Ozon, NO₂ als stat-kaartjes (`bg-white/5 rounded-xl p-3`)
+- Sub-sectie "🌿 Pollen": 🌾 Gras, 🌳 Berk, 🌿 Ambrosia — elk met `pollenLabel()`
+- Loading / error: return null
 
 ---
 
@@ -161,9 +181,11 @@ export function pollenLabel(value: number): string {
 
 Scrapt `https://www.knmi.nl/nederland-nu/weer/waarschuwingen` met axios + cheerio.
 Zoekt naar waarschuwingen voor provincie **Gelderland**.
-Revalidate: 900 (15 min).
+Revalidate: 900
 
-Response type:
+Request headers: volledige browser-mimicking set (User-Agent Firefox, Sec-Fetch-*, Accept-Encoding, etc.) — zelfde patroon als andere scrapers in `lib/scrape.ts`.
+
+Response:
 ```ts
 type Warning = {
   level: "geel" | "oranje" | "rood";
@@ -171,26 +193,19 @@ type Warning = {
   validFrom: string;
   validUntil: string;
 };
-// Returns: { warnings: Warning[] }
-// Als geen waarschuwingen: { warnings: [] }
+// { warnings: Warning[] }
+// Lege array als geen actieve waarschuwingen
 ```
-
-Headers: volledige browser-mimicking header set (zoals andere scrapers in dit project).
 
 ### Nieuwe Component (`components/KnmiWarnings.tsx`)
 
 - `"use client"`, fetcht `/api/knmi-warnings`
-- Als `warnings.length === 0`: return null (blok onzichtbaar)
-- Als actieve waarschuwingen: glass-card met gekleurde linkerborder
+- `warnings.length === 0` → return null
+- Per waarschuwing: glass-card met gekleurde linkerborder:
   - Geel: `border-l-4 border-yellow-400`
   - Oranje: `border-l-4 border-orange-500`
   - Rood: `border-l-4 border-red-600`
-- Per waarschuwing: level badge + omschrijving + geldigheid
-- Icon: ⚠️
-
-### Paginavolgorde (`app/page.tsx`)
-
-`<KnmiWarnings />` toevoegen **boven** `<Hero />` — waarschuwingen moeten direct zichtbaar zijn.
+- Inhoud: `⚠️ [level badge] [omschrijving]` + geldigheidsperiode in `text-white/50 text-xs`
 
 ---
 
@@ -198,41 +213,18 @@ Headers: volledige browser-mimicking header set (zoals andere scrapers in dit pr
 
 ### Nieuwe Component (`components/LightningMap.tsx`)
 
-- Geen API route nodig — iframe embed
-- URL: `https://www.lightningmaps.org/?lang=nl#m=oss;t=3;s=0;o=0;b=;ts=0;`
+- Geen API route — iframe embed
 - Glass-card wrapper
-- `<iframe>` hoogte: 400px, width: 100%, `border-0 rounded-xl`
-- Bron-vermelding: "Bron: Lightningmaps.org · live bliksemdetectie"
-- Titel: "⚡ Live Bliksemradar"
-
-### Paginavolgorde (`app/page.tsx`)
-
-`<LightningMap />` toevoegen na `<BuienradarBlock />` — logisch samen met het radar-blok.
-
----
-
-## Paginastructuur na alle wijzigingen
-
-```
-KnmiWarnings (alleen zichtbaar bij actieve waarschuwing)
-Hero
-HourlyStrip
-DayCards
-ForecastChart
-BuienradarBlock
-LightningMap          ← nieuw
-CurrentWeatherBlock
-ModelComparator
-Historical
-Advanced
-AirQuality            ← nieuw
-```
+- Header: `⚡ Live Bliksemradar` (zelfde stijl als andere headers)
+- `<iframe src="https://www.lightningmaps.org/?lang=nl#m=oss;t=3;s=0;o=0;b=;ts=0;" className="w-full rounded-xl border-0" style={{ height: "400px" }} />`
+- Bron: `text-white/30 text-xs`: "Bron: Lightningmaps.org · live bliksemdetectie"
 
 ---
 
 ## Niet in scope
 
+- Meer dan 2 tabs
 - Historische luchtkwaliteit
-- Pollenkalender (seizoensoverzicht)
 - Push-notificaties bij waarschuwingen
 - Andere provincies dan Gelderland
+- Deep-links naar specifieke tabs
