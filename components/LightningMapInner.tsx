@@ -26,6 +26,7 @@ export default function LightningMapInner() {
   const [status, setStatus] = useState<"connecting" | "live" | "disconnected">("connecting");
 
   useEffect(() => {
+    mountedRef.current = true;
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     // Inject dark tile style
