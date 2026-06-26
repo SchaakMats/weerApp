@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 900;
 
-// Station Heino (dichtstbij Hattem) = 257
+// Station Heino (dichtstbij Hattem) = 278
 export async function GET() {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(
-      "https://www.daggegevens.knmi.nl/klimatologie/uurgegevens?stns=257&vars=T:U:P:DD:FF:VV:N&start=" +
+      "https://www.daggegevens.knmi.nl/klimatologie/uurgegevens?stns=278&vars=T:U:P:DD:FF:VV:N&start=" +
         getYesterdayStr() + "&end=" + getTodayStr(),
       {
         headers: { Accept: "application/json" },
