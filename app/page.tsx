@@ -14,10 +14,10 @@ export default function Home() {
       <Hero />
       <HourlyStrip />
       <DayCards />
+      <ForecastChart />
       <BuienradarBlock />
       <CurrentWeatherBlock />
       <ModelComparator />
-      <ForecastChart />
       <Historical />
       <Advanced />
     </main>
