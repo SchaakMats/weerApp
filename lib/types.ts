@@ -9,6 +9,8 @@ export type CurrentWeather = {
   visibility: number;
   cloudcover: number;
   weathercode: number;
+  dewPoint: number;
+  windGusts: number;
 };
 
 export type DailyForecast = {
@@ -19,6 +21,7 @@ export type DailyForecast = {
   windspeedMax: number;
   weathercode: number;
   precipitationProbability: number;
+  windGusts: number;
 };
 
 export type HourlyForecast = {
@@ -28,6 +31,7 @@ export type HourlyForecast = {
   windspeed: number;
   precipitationProbability: number;
   weathercode: number;
+  windGusts: number;
 };
 
 export type OpenMeteoResponse = {

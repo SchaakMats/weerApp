@@ -11,18 +11,20 @@ export async function GET() {
   url.searchParams.set("current", [
     "temperature_2m","apparent_temperature","relative_humidity_2m",
     "wind_speed_10m","wind_direction_10m","surface_pressure",
-    "uv_index","visibility","cloud_cover","weather_code"
+    "uv_index","visibility","cloud_cover","weather_code",
+    "dew_point_2m","wind_gusts_10m"
   ].join(","));
   url.searchParams.set("daily", [
     "temperature_2m_min","temperature_2m_max","precipitation_sum",
-    "wind_speed_10m_max","weather_code","precipitation_probability_max"
+    "wind_speed_10m_max","weather_code","precipitation_probability_max",
+    "wind_gusts_10m_max"
   ].join(","));
   url.searchParams.set("hourly", [
     "temperature_2m","precipitation","wind_speed_10m",
-    "precipitation_probability","weather_code"
+    "precipitation_probability","weather_code","wind_gusts_10m"
   ].join(","));
   url.searchParams.set("timezone", "Europe/Amsterdam");
-  url.searchParams.set("forecast_days", "7");
+  url.searchParams.set("forecast_days", "14");
 
   try {
     const controller = new AbortController();
@@ -48,6 +50,8 @@ export async function GET() {
         visibility: json.current.visibility,
         cloudcover: json.current.cloud_cover,
         weathercode: json.current.weather_code,
+        dewPoint: json.current.dew_point_2m,
+        windGusts: json.current.wind_gusts_10m,
       },
       daily: (json.daily?.time ?? []).map((date: string, i: number) => ({
         date,
@@ -57,6 +61,7 @@ export async function GET() {
         windspeedMax: json.daily.wind_speed_10m_max?.[i] ?? null,
         weathercode: json.daily.weather_code?.[i] ?? 0,
         precipitationProbability: json.daily.precipitation_probability_max?.[i] ?? 0,
+        windGusts: json.daily.wind_gusts_10m_max?.[i] ?? null,
       })),
       hourly: (json.hourly?.time ?? []).map((time: string, i: number) => ({
         time,
@@ -65,6 +70,7 @@ export async function GET() {
         windspeed: json.hourly.wind_speed_10m?.[i] ?? null,
         precipitationProbability: json.hourly.precipitation_probability?.[i] ?? 0,
         weathercode: json.hourly.weather_code?.[i] ?? 0,
+        windGusts: json.hourly.wind_gusts_10m?.[i] ?? null,
       })),
     };
 
